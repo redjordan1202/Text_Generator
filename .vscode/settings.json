@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "openpyxl"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "off"
 }
