@@ -3,7 +3,8 @@
  False,
  False,
  False,
- 'C:\\Users\\jordan.delpilar\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\PyInstaller\\bootloader\\images\\icon-windowed.ico',
+ ['C:\\Users\\jordan.delpilar\\OneDrive - Turf '
+  'Distributors\\Documents\\Python\\samplesMSG\\samplesMSG\\favicon.ico'],
  None,
  False,
  False,
@@ -2880,7 +2881,7 @@
  [],
  False,
  False,
- 1667411349,
+ 1667412410,
  [('runw.exe',
    'C:\\Users\\jordan.delpilar\\AppData\\Local\\Programs\\Python\\Python310\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\runw.exe',
    'EXECUTABLE')])
