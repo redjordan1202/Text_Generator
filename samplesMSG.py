@@ -90,16 +90,16 @@ class MainWindow(Tk):
         while i <= 1000:
             value = str(self.ws[("B" + str(i))].value)
             if value.isnumeric() == True:
-                current.order_number = value
-                current.phone_number = re.sub('\D','',str(self.ws[("I" + str(i))].value))
-                current.customer_name = str(self.ws[("D" + str(i))].value)
+                self.current.order_number = value
+                self.current.phone_number = re.sub('\D','',str(self.ws[("I" + str(i))].value))
+                self.current.customer_name = str(self.ws[("D" + str(i))].value)
                 self.get_time(i)
-                current.address = str(self.ws[("F" + str(i))].value)
-                current.message = msg.format(
-                    current.order_number, 
-                    current.time_start,
-                    current.time_end,
-                    current.address,
+                self.current.address = str(self.ws[("F" + str(i))].value)
+                self.current.message = msg.format(
+                    self.current.order_number, 
+                    self.current.time_start,
+                    self.current.time_end,
+                    self.current.address,
                 )
                 self.write_to_text(f)
             i = i + 1
