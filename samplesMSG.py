@@ -6,7 +6,7 @@ import os
 import re
 
 #Message template
-msg = """Artificial Grass Delivery Confirmation- Your WO {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
+msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
 """
 
 class Delivery():
