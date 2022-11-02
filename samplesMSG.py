@@ -5,6 +5,7 @@ from tkinter import filedialog
 import os
 import re
 import time
+import subprocess
 
 class Delivery():
     order_number = None
@@ -107,6 +108,8 @@ class MainWindow(Tk):
         time.sleep(3)
         self.edit_entry("Done")
         f.close()
+        subprocess.Popen(["notepad.exe", txt_path])
+
 
     def write_to_text(self, file):
         msg = """Customer Name: {}
