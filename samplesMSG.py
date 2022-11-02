@@ -4,10 +4,7 @@ from tkinter import *
 from tkinter import filedialog
 import os
 import re
-
-#Message template
-msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
-"""
+import time
 
 class Delivery():
     order_number = None
@@ -18,9 +15,6 @@ class Delivery():
     address = None
     message = None
 
-#Creating an instance of Delivery
-current = Delivery()
-
 class MainWindow(Tk):
     def __init__(self, master=None):
         #Window set up
@@ -28,13 +22,15 @@ class MainWindow(Tk):
         master.title("Delivery Message Generator")
         self.master.resizable(0, 0)
 
+        #Class Variables
         self.wb = None
         self.ws = None
         self.path = None
+        self.msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
+        """
+        self.current = Delivery()
 
-        msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
-        """  
-
+        #Widget Definitions 
         self.lbl_file = Label(
             master = self.master,
             text = "Selected File:"
@@ -64,11 +60,13 @@ class MainWindow(Tk):
             width = 20
         )
 
+        #Widget Deployment
         self.lbl_file.grid(column = 1, row = 0)
         self.ent_file.grid(column = 0, row = 1, columnspan = 3, pady = 10)
         self.btn_file.grid(column = 0, row = 2, padx = 50, pady = 10)
         self.btn_run.grid(column = 2, row = 2, padx = 50, pady = 10)
 
+    #Class Functions
     def choose_file(self):
         filetypes = (("Excel Spreadsheet", "*.xlsx"),)
         self.path = filedialog.askopenfilename(
@@ -78,11 +76,13 @@ class MainWindow(Tk):
         )
         self.wb = load_workbook(filename= self.path)
         self.ws = self.wb.active
-        self.ent_file.config(state = 'normal')
-        self.ent_file.delete(0, END)
-        self.ent_file.insert(0, os.path.split(self.path)[1])
+        self.edit_entry(os.path.split(self.path)[1])
 
     def process(self):
+        if self.path == None:
+            self.edit_entry("Please Select an Excel File")
+            return
+
         txt_path = os.path.split(self.path)[0] + "/" + datetime.now().strftime("%m-%d-%Y") + ".txt"
         f = open(txt_path, "a")
 
@@ -104,6 +104,8 @@ class MainWindow(Tk):
                 self.write_to_text(f)
             i = i + 1
 
+        time.sleep(3)
+        self.edit_entry("Done")
         f.close()
 
     def write_to_text(self, file):
@@ -119,7 +121,11 @@ Customer Number: {}
             current.message
             )
         )
-        
+
+    def edit_entry(self,text):
+        self.ent_file.config(state = 'normal')
+        self.ent_file.delete(0, END)
+        self.ent_file.insert(0,text)
         
 
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
