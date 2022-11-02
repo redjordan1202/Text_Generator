@@ -95,7 +95,7 @@ class MainWindow(Tk):
                 self.current.customer_name = str(self.ws[("D" + str(i))].value)
                 self.get_time(i)
                 self.current.address = str(self.ws[("F" + str(i))].value)
-                self.current.message = msg.format(
+                self.current.message = self.msg.format(
                     self.current.order_number, 
                     self.current.time_start,
                     self.current.time_end,
@@ -116,9 +116,9 @@ Customer Number: {}
 
 """
         file.write(msg.format(
-            current.customer_name, 
-            current.phone_number, 
-            current.message
+            self.current.customer_name, 
+            self.current.phone_number, 
+            self.current.message
             )
         )
 
@@ -131,24 +131,24 @@ Customer Number: {}
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
         start_time = datetime.strptime(str(self.ws[("H" + str(row))].value), '%m/%d/%Y %H:%M %p')
         start_time = int(start_time.hour) + 1
-        current.time_start = start_time
-        current.time_end = start_time + 2
+        self.current.time_start = start_time
+        self.current.time_end = start_time + 2
 
-        if current.time_start > 12:
-            current.time_start = str(current.time_end - 12)
-            current.time_start = current.time_start + ":00 PM"
-        elif current.time_start == 12:
-            current.time_start = str(current.time_start) + ":00 PM"
+        if self.current.time_start > 12:
+            self.current.time_start = str(self.current.time_end - 12)
+            self.current.time_start = self.current.time_start + ":00 PM"
+        elif self.current.time_start == 12:
+            self.current.time_start = str(self.current.time_start) + ":00 PM"
         else:
-            current.time_start = str(current.time_start) + ":00 AM"
+            self.current.time_start = str(self.current.time_start) + ":00 AM"
 
-        if current.time_end > 12:
-            current.time_end = str(current.time_end - 12)
-            current.time_end = current.time_end + ":00 PM"
-        elif current.time_end == 12:
-            current.time_end = str(current.time_end) + ":00 PM"
+        if self.current.time_end > 12:
+            self.current.time_end = str(self.current.time_end - 12)
+            self.current.time_end = self.current.time_end + ":00 PM"
+        elif self.current.time_end == 12:
+            self.current.time_end = str(self.current.time_end) + ":00 PM"
         else:
-            current.time_end = str(current.time_end) + ":00 AM"
+            self.current.time_end = str(self.current.time_end) + ":00 AM"
 
 if __name__ == "__main__":
     root = Tk()
