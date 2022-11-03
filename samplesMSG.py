@@ -11,6 +11,7 @@ class Delivery():
     order_number = None
     phone_number = None
     customer_name = None
+    day = None
     time_start = None
     time_end = None
     address = None
@@ -27,7 +28,7 @@ class MainWindow(Tk):
         self.wb = None
         self.ws = None
         self.path = None
-        self.msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered tomorrow between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
+        self.msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered {} between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
         """
         self.current = Delivery()
 
@@ -97,7 +98,8 @@ class MainWindow(Tk):
                 self.get_time(i)
                 self.current.address = str(self.ws[("F" + str(i))].value)
                 self.current.message = self.msg.format(
-                    self.current.order_number, 
+                    self.current.order_number,
+                    self.current.day, 
                     self.current.time_start,
                     self.current.time_end,
                     self.current.address,
@@ -152,6 +154,11 @@ Customer Number: {}
             self.current.time_end = str(self.current.time_end) + ":00 PM"
         else:
             self.current.time_end = str(self.current.time_end) + ":00 AM"
+
+        if datetime.today().weekday() == 4:
+            self.current.day = "Monday"
+        else:
+            self.current.day = "tomorrow"
 
 if __name__ == "__main__":
     root = Tk()
