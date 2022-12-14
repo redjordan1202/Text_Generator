@@ -1,10 +1,11 @@
 from openpyxl import Workbook,load_workbook
-from datetime import datetime
+from datetime import datetime, timedelta, time
 from tkinter import *
 from tkinter import filedialog
+from tkinter import simpledialog
+from time import sleep
 import os
 import re
-import time
 import subprocess
 import threading
 
@@ -60,7 +61,8 @@ class MainWindow(Frame):
         self.btn_run = Button(
             master = self.master,
             text = "Run",
-            command = lambda: threading.Thread(target = self.process).start(),
+            #command = lambda: threading.Thread(target = self.process).start(),
+            command = self.process,
             width = 20
         )
 
@@ -116,7 +118,7 @@ class MainWindow(Frame):
                 self.write_to_text(f)
             i = i + 1
 
-        time.sleep(3)
+        sleep(3)
         self.edit_entry("Done!")
         f.close()
         subprocess.Popen(["notepad.exe", txt_path])
@@ -146,8 +148,15 @@ Customer Number: {}
         value = str(self.ws[("H" + str(row))].value)
         try:
             start_time = datetime.strptime(value, '%m/%d/%Y %H:%M %p')
+            print(type(start_time))
         except:
-            start_time = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+            try:
+                start_time = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+            except:
+                hours = simpledialog.askinteger(title = "Hour Check", prompt = "Enter number of Hours in following time\n%s" % value)
+                start_time = time(hours, 0, 0)
+                if "PM" in value:
+                    start_time = start_time + timedelta(hours = 12)
         start_time = int(start_time.hour) + 1
         self.current.time_start = start_time
         self.current.time_end = start_time + 2
@@ -172,6 +181,12 @@ Customer Number: {}
             self.current.day = "Monday"
         else:
             self.current.day = "tomorrow"
+
+
+
+
+
+
 
 if __name__ == "__main__":
     root = Tk()
