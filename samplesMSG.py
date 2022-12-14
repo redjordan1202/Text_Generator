@@ -6,6 +6,7 @@ import os
 import re
 import time
 import subprocess
+import threading
 
 class Delivery():
     order_number = None
@@ -17,8 +18,9 @@ class Delivery():
     address = None
     message = None
 
-class MainWindow(Tk):
+class MainWindow(Frame):
     def __init__(self, master=None):
+        Frame.__init__(self, master)
         #Window set up
         self.master = master
         master.title("Delivery Message Generator")
@@ -58,7 +60,7 @@ class MainWindow(Tk):
         self.btn_run = Button(
             master = self.master,
             text = "Run",
-            command = self.process,
+            command = lambda: threading.Thread(target = self.process).start(),
             width = 20
         )
 
@@ -76,8 +78,12 @@ class MainWindow(Tk):
             initialdir = os.path.expanduser('~'),
             filetypes = filetypes
         )
-        self.wb = load_workbook(filename= self.path)
-        self.ws = self.wb.active
+        try:
+            self.wb = load_workbook(filename= self.path)
+            self.ws = self.wb.active
+        except:
+            self.edit_entry("Make sure Excel file isn't open")
+            return
         self.edit_entry(os.path.split(self.path)[1])
 
     def process(self):
@@ -85,11 +91,13 @@ class MainWindow(Tk):
             self.edit_entry("Please Select an Excel File")
             return
 
+        self.edit_entry("Processing... Please Wait")
+
         txt_path = os.path.split(self.path)[0] + "/" + datetime.now().strftime("%m-%d-%Y") + ".txt"
         f = open(txt_path, "a")
 
         i = 1
-        while i <= 1000:
+        while i <= 10000:
             value = str(self.ws[("B" + str(i))].value)
             if value.isnumeric() == True:
                 self.current.order_number = value
@@ -104,11 +112,12 @@ class MainWindow(Tk):
                     self.current.time_end,
                     self.current.address,
                 )
+                print(self.current.order_number)
                 self.write_to_text(f)
             i = i + 1
 
         time.sleep(3)
-        self.edit_entry("Done")
+        self.edit_entry("Done!")
         f.close()
         subprocess.Popen(["notepad.exe", txt_path])
 
@@ -134,7 +143,11 @@ Customer Number: {}
         
 
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
-        start_time = datetime.strptime(str(self.ws[("H" + str(row))].value), '%m/%d/%Y %H:%M %p')
+        value = str(self.ws[("H" + str(row))].value)
+        try:
+            start_time = datetime.strptime(value, '%m/%d/%Y %H:%M %p')
+        except:
+            start_time = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
         start_time = int(start_time.hour) + 1
         self.current.time_start = start_time
         self.current.time_end = start_time + 2
