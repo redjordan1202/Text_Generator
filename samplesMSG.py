@@ -114,7 +114,6 @@ class MainWindow(Frame):
                     self.current.time_end,
                     self.current.address,
                 )
-                print(self.current.order_number)
                 self.write_to_text(f)
             i = i + 1
 
@@ -147,11 +146,11 @@ Customer Number: {}
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
         value = str(self.ws[("H" + str(row))].value)
         try:
-            start_time = datetime.strptime(value, '%m/%d/%Y %H:%M %p')
-            print(type(start_time))
+            start_time = datetime.strptime(value, '%m/%d/%Y %I:%M %p')
+            print(start_time)
         except:
             try:
-                start_time = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                start_time = datetime.strptime(value, '%Y-%m-%d %I:%M:%S')
             except:
                 hours = simpledialog.askinteger(title = "Hour Check", prompt = "Enter number of Hours in following time\n%s" % value)
                 start_time = time(hours, 0, 0)
