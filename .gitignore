@@ -135,4 +135,9 @@ todo.md
 
 #Logs created from testing
 log.txt
+
+#venv config file
 pyvenv.cfg
+
+#vscode folder
+.vscode/
