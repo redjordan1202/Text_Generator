@@ -137,8 +137,13 @@ todo.md
 log.txt
 
 #venv config file
+
+#venv config file
 pyvenv.cfg
 
 #vscode folder
 .vscode/
 samplesMSG.code-workspace
+
+#vscode folder
+.vscode/
