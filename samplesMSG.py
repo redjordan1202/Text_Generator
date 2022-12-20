@@ -157,13 +157,17 @@ Customer Number: {}
                 if "PM" in value:
                     start_time = start_time + timedelta(hours = 12)
         start_time = int(start_time.hour) + 1
-        if start_time >= 3:
-            start_time = 4
+        print(start_time)
+        if "AM" in value:
+            print("AM")
+            if start_time <= 3:
+                start_time = 4
         self.current.time_start = start_time
         self.current.time_end = start_time + 2
 
         if self.current.time_start > 12:
-            self.current.time_start = str(self.current.time_end - 12)
+            self.current.time_start = str(self.current.time_start - 12)
+            print(self.current.time_start)
             self.current.time_start = self.current.time_start + ":00 PM"
         elif self.current.time_start == 12:
             self.current.time_start = str(self.current.time_start) + ":00 PM"
