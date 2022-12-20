@@ -157,6 +157,8 @@ Customer Number: {}
                 if "PM" in value:
                     start_time = start_time + timedelta(hours = 12)
         start_time = int(start_time.hour) + 1
+        if start_time >= 3:
+            start_time = 4
         self.current.time_start = start_time
         self.current.time_end = start_time + 2
 
@@ -180,11 +182,6 @@ Customer Number: {}
             self.current.day = "Monday"
         else:
             self.current.day = "tomorrow"
-
-
-
-
-
 
 
 if __name__ == "__main__":
