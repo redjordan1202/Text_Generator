@@ -1,55 +1,50 @@
 from openpyxl import Workbook,load_workbook
-from datetime import datetime, timedelta, time
+from datetime import datetime
 from tkinter import *
 from tkinter import filedialog
-from tkinter import simpledialog
-from time import sleep
+from parsedatetime import Calendar
 import os
 import re
 import subprocess
-import threading
 
-class Delivery():
+
+class WorkOrder():
     order_number = None
     phone_number = None
     customer_name = None
-    day = None
-    time_start = None
-    time_end = None
+    delivery_day = None
+    start_time = None
+    end_time = None
     address = None
     message = None
 
+message =  """Artificial Grass Delivery Confirmation- Your order, {}, has been dispatched and will be delivered {} between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm."""
+
 class MainWindow(Frame):
-    def __init__(self, master=None):
+    def __init__(self, master = None):
         Frame.__init__(self, master)
-        #Window set up
+
+        #Initial Window Set Up
         self.master = master
         master.title("Delivery Message Generator")
-        self.master.resizable(0, 0)
+        self.master.resizable(0,0)      #Setting window to not be resizable
 
         #Class Variables
-        self.wb = None
-        self.ws = None
-        self.path = None
-        self.msg = """Artificial Grass Delivery Confirmation- Your {} order has been dispatched and will be delivered {} between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm
-        """
-        self.current = Delivery()
+        self.wb = None      #Defining Workbook var. Keeping as None for now
+        self.ws = None      #Defining Worksheet var. Keeping as None for now
+        self.path = None    #Var to hold path to text file. Set to be same directory as the spreadsheet
+        self.order = WorkOrder()
 
-        #Widget Definitions 
-        self.lbl_file = Label(
-            master = self.master,
-            text = "Selected File:"
-        )
+        #Widget Definitions
+        self.lbl_file = Label(master = self.master, text = "Selected File:")
 
         self.ent_file = Entry(
             master = self.master,
             state = "disabled",
             width = 75,
             justify = LEFT,
-        )
-        self.ent_file.config(
-            disabledbackground = 'white',
-            disabledforeground = 'black'
+            disabledbackground = 'white',       #Overriding the default disabled background
+            disabledforeground = 'black'        #Overriding the default disabled text color
         )
 
         self.btn_file = Button(
@@ -61,7 +56,6 @@ class MainWindow(Frame):
         self.btn_run = Button(
             master = self.master,
             text = "Run",
-            #command = lambda: threading.Thread(target = self.process).start(),
             command = self.process,
             width = 20
         )
@@ -73,11 +67,32 @@ class MainWindow(Frame):
         self.btn_run.grid(column = 2, row = 2, padx = 50, pady = 10)
 
     #Class Functions
-    def choose_file(self):
-        filetypes = (("Excel Spreadsheet", "*.xlsx"),)
+
+    #Used to Edit ent_file
+    def edit_entry(self,text):  
+        self.ent_file.config(state = 'normal')      #Enabling the entry so I can be written
+        self.ent_file.delete(0, END)                #Deleting all text currently in the entry
+        self.ent_file.insert(0,text)                #Writing the new text to the entry
+
+    #Used to write the order and its message to the text document
+    def write_to_text(self, file):
+        msg = """Customer Name: {}
+Customer Number: {}
+{}
+================================================================================"""
+        file.write(msg.format(
+            self.order.customer_name, 
+            self.order.phone_number, 
+            self.order.message
+            )
+        )
+
+    #Function to handle spreadsheet opening
+    def choose_file(self):  
+        filetypes = (("Excel Spreadsheet", "*.xlsx"),)      #Setting the file types that are displayed in the file dialogue
         self.path = filedialog.askopenfilename(
             title = "Open File...",
-            initialdir = os.path.expanduser('~'),
+            initialdir = os.path.expanduser('~'),           #Default directory is the Users "Home" Directory
             filetypes = filetypes
         )
         try:
@@ -86,107 +101,85 @@ class MainWindow(Frame):
         except:
             self.edit_entry("Make sure Excel file isn't open")
             return
-        self.edit_entry(os.path.split(self.path)[1])
+        self.edit_entry(os.path.split(self.path)[1])        #Writing just the file name to the entry
 
+    #Main Processing function
     def process(self):
-        if self.path == None:
+        if self.path == None:                               #Check to ensure a file has been selected
             self.edit_entry("Please Select an Excel File")
             return
 
         self.edit_entry("Processing... Please Wait")
-
-        txt_path = os.path.split(self.path)[0] + "/" + datetime.now().strftime("%m-%d-%Y") + ".txt"
+    
+        txt_path = os.path.split(self.path)[0] + "/" + datetime.now().strftime("%m-%d-%Y") + ".txt" #Creating path to text in same directory as spreadsheet
         f = open(txt_path, "a")
 
-        i = 1
-        while i <= 10000:
-            value = str(self.ws[("B" + str(i))].value)
+        
+        row = 1             #Set Initial Row number
+        blank_rows = 0      #Var to count number of blank rows
+        while row <= 10000:
+            value = str(self.ws[("B" + str(row))].value)
             if value.isnumeric() == True:
-                self.current.order_number = value
-                self.current.phone_number = re.sub('\D','',str(self.ws[("I" + str(i))].value))
-                self.current.customer_name = str(self.ws[("D" + str(i))].value)
-                self.get_time(i)
-                self.current.address = str(self.ws[("F" + str(i))].value)
-                self.current.message = self.msg.format(
-                    self.current.order_number,
-                    self.current.day, 
-                    self.current.time_start,
-                    self.current.time_end,
-                    self.current.address,
+                blank_rows = 0      #Reset blank row count as order was found
+                self.order.order_number = value
+                self.order.phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
+                self.order.customer_name = str(self.ws[("D" + str(row))].value)
+                self.get_time(row)
+                self.order.address = str(self.ws[("F" + str(row))].value)
+                self.order.message = message.format(
+                    self.order.order_number,
+                    self.order.delivery_day, 
+                    self.order.start_time,
+                    self.order.end_time,
+                    self.order.address,
                 )
                 self.write_to_text(f)
-            i = i + 1
+            else:
+                if value == "None":
+                    blank_rows = blank_rows + 1
+                else:
+                    blank_rows = 0      #Reset blank row count as value of some kind was found
+            
+            print(blank_rows)
+            if blank_rows > 4:          #if we have 4 or more blank rows in a row
+                break                   #End the loop
+            else:
+                row = row + 1           #otherwise move to the next row
 
-        sleep(3)
         self.edit_entry("Done!")
         f.close()
-        subprocess.Popen(["notepad.exe", txt_path])
-
-
-    def write_to_text(self, file):
-        msg = """Customer Name: {}
-Customer Number: {}
-{}
-================================================================================
-
-"""
-        file.write(msg.format(
-            self.current.customer_name, 
-            self.current.phone_number, 
-            self.current.message
-            )
-        )
-
-    def edit_entry(self,text):
-        self.ent_file.config(state = 'normal')
-        self.ent_file.delete(0, END)
-        self.ent_file.insert(0,text)
-        
+        subprocess.Popen(["notepad.exe", txt_path])     #Open the written text file so the user can send messages
 
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
         value = str(self.ws[("H" + str(row))].value)
-        try:
-            start_time = datetime.strptime(value, '%m/%d/%Y %I:%M %p')
-            print(start_time)
-        except:
-            try:
-                start_time = datetime.strptime(value, '%Y-%m-%d %I:%M:%S')
-            except:
-                hours = simpledialog.askinteger(title = "Hour Check", prompt = "Enter number of Hours in following time\n%s" % value)
-                start_time = time(hours, 0, 0)
-                if "PM" in value:
-                    start_time = start_time + timedelta(hours = 12)
-        start_time = int(start_time.hour) + 1
-        print(start_time)
-        if "AM" in value:
-            print("AM")
-            if start_time <= 3:
-                start_time = 4
-        self.current.time_start = start_time
-        self.current.time_end = start_time + 2
+        cal = Calendar()      #Create calendar object so we can parse time
+        time = cal.parse(value)             #Convert human readable time to timedate object
+        start_time = time[0].tm_hour        #Set start_time to hour found before
+        if start_time <= 3:     #Early Morning deliveries are all set to 4am
+            start_time = 4
+        self.order.start_time = start_time
+        self.order.end_time = start_time + 2
 
-        if self.current.time_start > 12:
-            self.current.time_start = str(self.current.time_start - 12)
-            print(self.current.time_start)
-            self.current.time_start = self.current.time_start + ":00 PM"
-        elif self.current.time_start == 12:
-            self.current.time_start = str(self.current.time_start) + ":00 PM"
+        if self.order.start_time > 12:
+            self.order.start_time = str(self.order.start_time - 12)
+            self.order.start_time = self.order.start_time + ":00 PM"
+        elif self.order.start_time == 12:
+            self.order.start_time = str(self.order.start_time) + ":00 PM"
         else:
-            self.current.time_start = str(self.current.time_start) + ":00 AM"
+            self.order.start_time = str(self.order.start_time) + ":00 AM"
 
-        if self.current.time_end > 12:
-            self.current.time_end = str(self.current.time_end - 12)
-            self.current.time_end = self.current.time_end + ":00 PM"
-        elif self.current.time_end == 12:
-            self.current.time_end = str(self.current.time_end) + ":00 PM"
+        if self.order.end_time > 12:
+            self.order.end_time = str(self.order.end_time - 12)
+            self.order.end_time = self.order.end_time + ":00 PM"
+        elif self.order.end_time == 12:
+            self.order.end_time = str(self.order.end_time) + ":00 PM"
         else:
-            self.current.time_end = str(self.current.time_end) + ":00 AM"
+            self.order.end_time = str(self.order.end_time) + ":00 AM"
 
-        if datetime.today().weekday() == 4:
-            self.current.day = "Monday"
+        if datetime.today().weekday() == 4:     #Check if sending day is Friday. If it is change the message to say Monday delivery day
+            self.order.delivery_day = "Monday"
         else:
-            self.current.day = "tomorrow"
-
+            self.order.delivery_day = "tomorrow"
 
 if __name__ == "__main__":
     root = Tk()
