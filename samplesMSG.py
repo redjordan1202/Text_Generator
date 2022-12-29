@@ -3,6 +3,7 @@ from datetime import datetime
 from tkinter import *
 from tkinter import filedialog
 from parsedatetime import Calendar
+import threading
 import os
 import re
 import subprocess
@@ -17,6 +18,9 @@ class WorkOrder():
     end_time = None
     address = None
     message = None
+
+    def __str__(self):
+        return self.order_number
 
 message =  """Artificial Grass Delivery Confirmation- Your order, {}, has been dispatched and will be delivered {} between {} - {} at {}.To prepare for your delivery please make sure nothing is blocking the delivery location selected. You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm."""
 
@@ -33,7 +37,8 @@ class MainWindow(Frame):
         self.wb = None      #Defining Workbook var. Keeping as None for now
         self.ws = None      #Defining Worksheet var. Keeping as None for now
         self.path = None    #Var to hold path to text file. Set to be same directory as the spreadsheet
-        self.order = WorkOrder()
+
+        self.order_list = []
 
         #Widget Definitions
         self.lbl_file = Label(master = self.master, text = "Selected File:")
@@ -56,7 +61,7 @@ class MainWindow(Frame):
         self.btn_run = Button(
             master = self.master,
             text = "Run",
-            command = self.process,
+            command = lambda: threading.Thread(target = self.process).start(),
             width = 20
         )
 
@@ -74,16 +79,20 @@ class MainWindow(Frame):
         self.ent_file.delete(0, END)                #Deleting all text currently in the entry
         self.ent_file.insert(0,text)                #Writing the new text to the entry
 
+    #Create Check Messages Window
+    def create_check_window(self):
+        self.check_window = CheckWindow(self)
+
     #Used to write the order and its message to the text document
-    def write_to_text(self, file):
+    def write_to_text(self, file, order):
         msg = """Customer Name: {}
 Customer Number: {}
 {}
 ================================================================================"""
         file.write(msg.format(
-            self.order.customer_name, 
-            self.order.phone_number, 
-            self.order.message
+            order.customer_name, 
+            order.phone_number, 
+            order.message
             )
         )
 
@@ -120,27 +129,29 @@ Customer Number: {}
         while row <= 10000:
             value = str(self.ws[("B" + str(row))].value)
             if value.isnumeric() == True:
+                order = WorkOrder()
                 blank_rows = 0      #Reset blank row count as order was found
-                self.order.order_number = value
-                self.order.phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
-                self.order.customer_name = str(self.ws[("D" + str(row))].value)
-                self.get_time(row)
-                self.order.address = str(self.ws[("F" + str(row))].value)
-                self.order.message = message.format(
-                    self.order.order_number,
-                    self.order.delivery_day, 
-                    self.order.start_time,
-                    self.order.end_time,
-                    self.order.address,
+                order.order_number = value
+                order.phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
+                order.customer_name = str(self.ws[("D" + str(row))].value)
+                self.get_time(row, order)
+                order.address = str(self.ws[("F" + str(row))].value)
+                order.message = message.format(
+                    order.order_number,
+                    order.delivery_day, 
+                    order.start_time,
+                    order.end_time,
+                    order.address,
                 )
-                self.write_to_text(f)
+                self.order_list.append(order)
+                self.write_to_text(f, order)
+                
             else:
                 if value == "None":
                     blank_rows = blank_rows + 1
                 else:
                     blank_rows = 0      #Reset blank row count as value of some kind was found
             
-            print(blank_rows)
             if blank_rows > 4:          #if we have 4 or more blank rows in a row
                 break                   #End the loop
             else:
@@ -149,37 +160,173 @@ Customer Number: {}
         self.edit_entry("Done!")
         f.close()
         subprocess.Popen(["notepad.exe", txt_path])     #Open the written text file so the user can send messages
+        self.create_check_window()
 
-    def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
+    def get_time(self, row, order): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
         value = str(self.ws[("H" + str(row))].value)
         cal = Calendar()      #Create calendar object so we can parse time
         time = cal.parse(value)             #Convert human readable time to timedate object
         start_time = time[0].tm_hour        #Set start_time to hour found before
         if start_time <= 3:     #Early Morning deliveries are all set to 4am
             start_time = 4
-        self.order.start_time = start_time
-        self.order.end_time = start_time + 2
+        order.start_time = start_time
+        order.end_time = start_time + 2
 
-        if self.order.start_time > 12:
-            self.order.start_time = str(self.order.start_time - 12)
-            self.order.start_time = self.order.start_time + ":00 PM"
-        elif self.order.start_time == 12:
-            self.order.start_time = str(self.order.start_time) + ":00 PM"
+        if order.start_time > 12:
+            order.start_time = str(order.start_time - 12)
+            order.start_time = order.start_time + ":00 PM"
+        elif order.start_time == 12:
+            order.start_time = str(order.start_time) + ":00 PM"
         else:
-            self.order.start_time = str(self.order.start_time) + ":00 AM"
+            order.start_time = str(order.start_time) + ":00 AM"
 
-        if self.order.end_time > 12:
-            self.order.end_time = str(self.order.end_time - 12)
-            self.order.end_time = self.order.end_time + ":00 PM"
-        elif self.order.end_time == 12:
-            self.order.end_time = str(self.order.end_time) + ":00 PM"
+        if order.end_time > 12:
+            order.end_time = str(order.end_time - 12)
+            order.end_time = order.end_time + ":00 PM"
+        elif order.end_time == 12:
+            order.end_time = str(order.end_time) + ":00 PM"
         else:
-            self.order.end_time = str(self.order.end_time) + ":00 AM"
+            order.end_time = str(order.end_time) + ":00 AM"
 
         if datetime.today().weekday() == 4:     #Check if sending day is Friday. If it is change the message to say Monday delivery day
-            self.order.delivery_day = "Monday"
+            order.delivery_day = "Monday"
         else:
-            self.order.delivery_day = "tomorrow"
+            order.delivery_day = "tomorrow"
+
+class CheckWindow(Frame):
+    def __init__(self, parent):
+        Frame.__init__(self, parent)
+        self.check_window = Toplevel()  #Set the window as a toplevel window
+        self.check_window.title("Check Messages")
+        self.check_window.resizable(0,0)
+        self.check_window.grab_set()    #grab focus
+
+        self.order = None
+        self.order_list = StringVar(value = parent.order_list)
+
+        #Widget Definitions
+        self.frm_order_list = Frame(
+            self.check_window,
+            relief = "ridge",
+            borderwidth = 4
+        )
+        self.lbl_order_list = Label(
+            self.frm_order_list,
+            text = "Work Orders",
+            font = ("Ariel", 18)
+        )
+        self.lbl_order_count = Label(
+            self.frm_order_list,
+            text = "{} Orders Found".format(len(parent.order_list))
+        )
+        self.scrollbar = Scrollbar(self.frm_order_list)
+        self.lbox_orders = Listbox(
+            self.frm_order_list,
+            selectmode = SINGLE,
+            height = 22,
+            width = 22,
+            listvariable = self.order_list,
+            yscrollcommand = self.scrollbar.set
+        )
+        self.scrollbar.config(command = self.lbox_orders.yview)
+
+        self.frm_order_info = Frame(
+            self.check_window,
+            relief = "ridge",
+            borderwidth = 4
+        )
+        self.lbl_order_info = Label(
+            self.frm_order_info,
+            text = "Order Information",
+            font = ("Ariel", 18)
+        )
+        self.frm_info = Frame(self.frm_order_info)
+
+        self.lbl_order_number = Label(
+            self.frm_info,
+            text = "Order Number"
+        )
+        self.lbl_order_phone = Label(
+            self.frm_info,
+            text = "Phone Number"
+        )
+        self.ent_order_number = Entry(
+            self.frm_info,
+            state = "disabled",
+            width = 25,
+            justify = LEFT,
+            disabledbackground = 'white',       #Overriding the default disabled background
+            disabledforeground = 'black'        #Overriding the default disabled text color
+        )
+        self.ent_order_phone = Entry(
+            self.frm_info,
+            state = "disabled",
+            width = 25,
+            justify = LEFT,
+            disabledbackground = 'white',       #Overriding the default disabled background
+            disabledforeground = 'black'        #Overriding the default disabled text color
+        )
+        self.lbl_message = Label(
+            self.frm_info,
+            text = "Message"
+        )
+        self.txt_message = Text(
+            self.frm_info,
+            width = 70,
+            height = 20,
+            wrap = WORD
+        )
+
+        #Place Widgets
+        self.frm_order_list.pack(pady = 5, padx = 5, side = LEFT)
+        self.lbl_order_list.pack(pady = 5, padx = 5)
+        self.lbl_order_count.pack(padx = 5, fill = X)
+        self.lbox_orders.pack(side = LEFT, pady = 5, padx = 5, fill = X)
+        self.scrollbar.pack(side = RIGHT, fill = Y)
+        self.frm_order_info.pack(pady = 5, padx = 5, side = LEFT)
+        self.lbl_order_info.pack(pady = 5, padx = 5)
+        self.frm_info.pack(pady = 5, padx = 5)
+        self.frm_info.pack_propagate(0)
+        self.lbl_order_number.grid(column = 0, row = 0)
+        self.lbl_order_phone.grid(column = 1, row = 0)
+        self.ent_order_number.grid(column = 0, row = 1)
+        self.ent_order_phone.grid(column = 1, row = 1)
+        self.lbl_message.grid(column = 0, row = 2, columnspan = 2)
+        self.txt_message.grid(column = 0, row = 3, columnspan = 2)
+
+        self.lbox_orders.selection_anchor(0)
+        self.lbox_orders.bind("<Double-1>", lambda event: self.get_order_info(parent))
+        self.lbox_orders.bind("<Map>", lambda event: self.get_order_info(parent))
+
+    #Class Methods
+
+    #Function to edit entry widgets
+    def edit_entry(self,entry, text):  
+        entry.config(state = 'normal')      #Enabling the entry so I can be written
+        entry.delete(0, END)                #Deleting all text currently in the entry
+        entry.insert(0,text)                #Writing the new text to the entry
+        entry.config(state = 'disabled')    #Disabling the entry again
+    
+    #Function to edit the message text box
+    def edit_text(self, text):
+        self.txt_message.delete(1.0, "end")
+        self.txt_message.insert(1.0, text)
+
+    def get_order_info(self, parent):
+        selection = self.lbox_orders.get(ANCHOR)    #Get current selection from listbox
+        
+        for i in parent.order_list:
+            if i.order_number == selection:     #Search order list for order number
+                self.order = i
+
+        self.edit_entry(self.ent_order_number, self.order.order_number)
+        self.edit_entry(self.ent_order_phone, self.order.phone_number)
+        self.edit_text(self.order.message)
+
+
+
+
+
 
 if __name__ == "__main__":
     root = Tk()
