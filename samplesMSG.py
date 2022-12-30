@@ -2,11 +2,14 @@ from openpyxl import Workbook,load_workbook
 from datetime import datetime
 from tkinter import *
 from tkinter import filedialog
+from tkinter import scrolledtext
 from parsedatetime import Calendar
+from time import sleep
 import threading
 import os
 import re
 import subprocess
+import requests
 
 
 class WorkOrder():
@@ -88,7 +91,8 @@ class MainWindow(Frame):
         msg = """Customer Name: {}
 Customer Number: {}
 {}
-================================================================================"""
+================================================================================
+"""
         file.write(msg.format(
             order.customer_name, 
             order.phone_number, 
@@ -228,8 +232,9 @@ class CheckWindow(Frame):
             listvariable = self.order_list,
             yscrollcommand = self.scrollbar.set
         )
-        self.scrollbar.config(command = self.lbox_orders.yview)
-
+        self.lbox_orders.config(exportselection = False)         #Prevent listbox selection from un-highlighting on focus change
+        self.scrollbar.config(command = self.lbox_orders.yview)  #bind scrollbar to listbox
+        
         self.frm_order_info = Frame(
             self.check_window,
             relief = "ridge",
@@ -276,7 +281,42 @@ class CheckWindow(Frame):
             height = 20,
             wrap = WORD
         )
+        self.btn_update = Button(
+            self.frm_info,
+            text = "Update Message",
+            command = self.update_message
+        )
+        self.btn_confirm = Button(
+            self.frm_info,
+            text = "Send Messages",
+            command = lambda: threading.Thread(target = self.send_messages, args = (parent,)).start()
+        )
 
+        self.frm_log = Frame(
+            self.check_window,
+            relief = "ridge",
+            borderwidth = 4
+        )
+        self.log = scrolledtext.ScrolledText(
+            self.frm_log,
+            width = 70,
+            height = 20,
+            wrap = WORD,
+            state = DISABLED,
+        )
+        self.btn_finish = Button(
+            self.frm_log,
+            text = "Finish",
+            state = DISABLED,
+            command = parent.quit
+        )
+        
+        """
+        TODO
+        - Change toplevel frames geometry to grid rather then pack
+        - Move Send button to the bottom right corner of the window outside the rest of the frames
+            - Maybe add an image to the send button. Something like an envelope
+        """
         #Place Widgets
         self.frm_order_list.pack(pady = 5, padx = 5, side = LEFT)
         self.lbl_order_list.pack(pady = 5, padx = 5)
@@ -293,13 +333,15 @@ class CheckWindow(Frame):
         self.ent_order_phone.grid(column = 1, row = 1)
         self.lbl_message.grid(column = 0, row = 2, columnspan = 2)
         self.txt_message.grid(column = 0, row = 3, columnspan = 2)
-
+        self.btn_update.grid(column = 1, row = 4, padx = 5, pady = 5, sticky = E)
+        self.btn_confirm.grid(column = 1, row = 5, padx = 5, pady = 5, sticky = E)
+        
         self.lbox_orders.selection_anchor(0)
         self.lbox_orders.bind("<Double-1>", lambda event: self.get_order_info(parent))
         self.lbox_orders.bind("<Map>", lambda event: self.get_order_info(parent))
 
     #Class Methods
-
+    
     #Function to edit entry widgets
     def edit_entry(self,entry, text):  
         entry.config(state = 'normal')      #Enabling the entry so I can be written
@@ -308,10 +350,16 @@ class CheckWindow(Frame):
         entry.config(state = 'disabled')    #Disabling the entry again
     
     #Function to edit the message text box
-    def edit_text(self, text):
-        self.txt_message.delete(1.0, "end")
-        self.txt_message.insert(1.0, text)
+    def edit_text(self, content, text_box):
+        text_box.delete(1.0, "end")
+        text_box.insert(1.0, content)
 
+    def write_log(self,text):
+        self.log.config(state = NORMAL)
+        self.log.insert("end", text)
+        self.log.see(END)
+        self.log.config(state = DISABLED)
+    
     def get_order_info(self, parent):
         selection = self.lbox_orders.get(ANCHOR)    #Get current selection from listbox
         
@@ -321,12 +369,58 @@ class CheckWindow(Frame):
 
         self.edit_entry(self.ent_order_number, self.order.order_number)
         self.edit_entry(self.ent_order_phone, self.order.phone_number)
-        self.edit_text(self.order.message)
+        self.edit_text(self.order.message, self.txt_message)
 
+    def update_message(self):
+        if self.order == None:
+            return
+        self.order.message = self.txt_message.get(1.0, 'end-1c')
 
+    def send_messages(self,parent):
+        #Create the log box
+        self.frm_log.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        self.log.pack(pady = 10, padx = 10)
+        self.btn_finish.pack()
 
+        #Disable other buttons and message text box
+        self.btn_confirm.config(state = DISABLED)
+        self.btn_update.config(state = DISABLED)
+        self.txt_message.config(state = DISABLED)
 
+        self.check_window.protocol("WM_DELETE_WINDOW", disable_event)       #Disable X button on window
 
+        hasError = False
+
+        self.write_log("Getting Ready to Send Messages\n")
+        self.write_log("***PLEASE DO NOT CLOSE THE PROGRAM***\n")
+        self.write_log("Processing {} Orders\n\n".format(len(parent.order_list)))
+        sleep(5)
+
+        for order in parent.order_list:
+            self.write_log("Sending Work Order {}\n".format(order.order_number))
+            payload = {
+                "destination" : order.phone_number,
+                "source" : "1234567890",
+                "clientMessageId" : order.order_number,
+                "text" : order.message,
+            }
+            response = requests.post("https://eoinm2i8j9t7pkn.m.pipedream.net", payload)
+            if response.status_code == 200:
+                self.write_log("Message Sent to 8x8 Successfully\n\n")
+            else:
+                self.write_log("***ERROR Code {}***\n".format(response.status_code))
+                self.write_log("Message Failed to Send\n")
+                hasError = True
+            self.write_log("====================\n\n")
+        self.write_log("Sending Complete\n")
+        if hasError:
+            self.write_log("*Warning* At Least Message had an Error During Sending")
+        
+        self.btn_finish.config(state = NORMAL)
+
+#Function to disable on-click events
+def disable_event():
+    pass
 
 if __name__ == "__main__":
     root = Tk()
