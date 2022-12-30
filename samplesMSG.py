@@ -224,7 +224,7 @@ class CheckWindow(Frame):
         self.lbox_orders = Listbox(
             self.frm_order_list,
             selectmode = SINGLE,
-            height = 22,
+            height = 25,
             width = 22,
             listvariable = self.order_list,
             yscrollcommand = self.scrollbar.set
@@ -282,7 +282,7 @@ class CheckWindow(Frame):
             command = self.update_message
         )
         self.btn_confirm = Button(
-            self.frm_info,
+            self.check_window,
             text = "Send Messages",
             command = lambda: threading.Thread(target = self.send_messages, args = (parent,)).start()
         )
@@ -313,12 +313,12 @@ class CheckWindow(Frame):
             - Maybe add an image to the send button. Something like an envelope
         """
         #Place Widgets
-        self.frm_order_list.pack(pady = 5, padx = 5, side = LEFT)
+        self.frm_order_list.grid(column = 0, row = 0, padx = 5, pady =5)
         self.lbl_order_list.pack(pady = 5, padx = 5)
         self.lbl_order_count.pack(padx = 5, fill = X)
         self.lbox_orders.pack(side = LEFT, pady = 5, padx = 5, fill = X)
         self.scrollbar.pack(side = RIGHT, fill = Y)
-        self.frm_order_info.pack(pady = 5, padx = 5, side = LEFT)
+        self.frm_order_info.grid(column = 1, row = 0, padx = 5, pady =5)
         self.lbl_order_info.pack(pady = 5, padx = 5)
         self.frm_info.pack(pady = 5, padx = 5)
         self.frm_info.pack_propagate(0)                     #Allow the use of Grid geometry within the frame
@@ -329,7 +329,7 @@ class CheckWindow(Frame):
         self.lbl_message.grid(column = 0, row = 2, columnspan = 2)
         self.txt_message.grid(column = 0, row = 3, columnspan = 2)
         self.btn_update.grid(column = 1, row = 4, padx = 5, pady = 5, sticky = E)
-        self.btn_confirm.grid(column = 1, row = 5, padx = 5, pady = 5, sticky = E)
+        self.btn_confirm.grid(column = 1, row = 2, padx = 5, pady =5, sticky = E)
         
         self.lbox_orders.selection_anchor(0)                #Setting listbox section to the first entry
         self.lbox_orders.bind("<Double-1>", lambda event: self.get_order_info(parent))  #Bind double click to get_order_info
