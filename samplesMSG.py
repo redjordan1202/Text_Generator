@@ -79,7 +79,7 @@ class MainWindow(Frame):
         msg = """Customer Name: {}
 Customer Number: {}
 {}
-================================================================================"""
+================================================================================\n"""
         file.write(msg.format(
             self.order.customer_name, 
             self.order.phone_number, 
@@ -122,7 +122,15 @@ Customer Number: {}
             if value.isnumeric() == True:
                 blank_rows = 0      #Reset blank row count as order was found
                 self.order.order_number = value
-                self.order.phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
+                phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
+                if phone_number:
+                    if phone_number[0] == '1':
+                        phone_number = '+' + phone_number
+                    else:
+                        phone_number = '+1' + phone_number
+                else:
+                    phone_number = "N/A"
+                self.order.phone_number = phone_number
                 self.order.customer_name = str(self.ws[("D" + str(row))].value)
                 self.get_time(row)
                 self.order.address = str(self.ws[("F" + str(row))].value)
@@ -140,7 +148,6 @@ Customer Number: {}
                 else:
                     blank_rows = 0      #Reset blank row count as value of some kind was found
             
-            print(blank_rows)
             if blank_rows > 4:          #if we have 4 or more blank rows in a row
                 break                   #End the loop
             else:
