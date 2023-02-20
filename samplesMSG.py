@@ -35,6 +35,13 @@ class MainWindow(Frame):
         self.path = None    #Var to hold path to text file. Set to be same directory as the spreadsheet
         self.order = WorkOrder()
 
+        #column definitions
+        self.WO_Col = 'B'
+        self.CN_Col = 'D'
+        self.ADD_Col = 'F'
+        self.ST_Col = 'H'
+        self.PN_Col = 'I'
+
         #Widget Definitions
         self.lbl_file = Label(master = self.master, text = "Selected File:")
 
@@ -116,13 +123,15 @@ Customer Number: {}
 
         
         row = 1             #Set Initial Row number
-        blank_rows = 0      #Var to count number of blank rows
+        blank_rows = 0
+        non_WO_rows = 0   
+        orders_sent = 0   #Var to count number of blank rows
         while row <= 10000:
-            value = str(self.ws[("B" + str(row))].value)
+            value = str(self.ws[(self.WO_Col + str(row))].value)
             if value.isnumeric() == True:
                 blank_rows = 0      #Reset blank row count as order was found
                 self.order.order_number = value
-                phone_number = re.sub('\D','',str(self.ws[("I" + str(row))].value))
+                phone_number = re.sub('\D','',str(self.ws[(self.PN_Col + str(row))].value))
                 if phone_number:
                     if phone_number[0] == '1':
                         phone_number = '+' + phone_number
@@ -131,9 +140,9 @@ Customer Number: {}
                 else:
                     phone_number = "N/A"
                 self.order.phone_number = phone_number
-                self.order.customer_name = str(self.ws[("D" + str(row))].value)
+                self.order.customer_name = str(self.ws[(self.CN_Col + str(row))].value)
                 self.get_time(row)
-                self.order.address = str(self.ws[("F" + str(row))].value)
+                self.order.address = str(self.ws[(self.ADD_Col + str(row))].value)
                 self.order.message = message.format(
                     self.order.order_number,
                     self.order.delivery_day, 
@@ -142,14 +151,32 @@ Customer Number: {}
                     self.order.address,
                 )
                 self.write_to_text(f)
+                orders_sent = orders_sent + 1
             else:
                 if value == "None":
                     blank_rows = blank_rows + 1
+                elif value != "None":       
+                    non_WO_rows = non_WO_rows + 1
                 else:
-                    blank_rows = 0      #Reset blank row count as value of some kind was found
+                    non_WO_rows = 0
+                    blank_rows = 0
             
-            if blank_rows > 4:          #if we have 4 or more blank rows in a row
-                break                   #End the loop
+            if non_WO_rows > 4:
+                self.WO_Col = 'D'
+                self.CN_Col = 'F'
+                self.ADD_Col = 'H'
+                self.ST_Col = 'J'
+                self.PN_Col = 'K'
+                row = row - 3
+                non_WO_rows = 0
+                continue
+
+            if blank_rows > 5:
+                if orders_sent > 0:
+                    break
+                else:
+                    blank_rows = 1
+                    continue
             else:
                 row = row + 1           #otherwise move to the next row
 
@@ -158,7 +185,7 @@ Customer Number: {}
         subprocess.Popen(["notepad.exe", txt_path])     #Open the written text file so the user can send messages
 
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
-        value = str(self.ws[("H" + str(row))].value)
+        value = str(self.ws[(self.ST_Col + str(row))].value)
         cal = Calendar()      #Create calendar object so we can parse time
         time = cal.parse(value)             #Convert human readable time to timedate object
         start_time = time[0].tm_hour        #Set start_time to hour found before
@@ -166,7 +193,6 @@ Customer Number: {}
             start_time = 4
         self.order.start_time = start_time
         self.order.end_time = start_time + 2
-
         if self.order.start_time > 12:
             self.order.start_time = str(self.order.start_time - 12)
             self.order.start_time = self.order.start_time + ":00 PM"
