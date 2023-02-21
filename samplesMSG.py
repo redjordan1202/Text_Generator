@@ -26,6 +26,7 @@ class MainWindow(Frame):
 
         #Initial Window Set Up
         self.master = master
+        master.iconbitmap("TD.ico")
         master.title("Delivery Message Generator")
         self.master.resizable(0,0)      #Setting window to not be resizable
 
@@ -139,6 +140,8 @@ Customer Number: {}
                         phone_number = '+1' + phone_number
                 else:
                     phone_number = "N/A"
+                if len(phone_number) > 12:
+                    phone_number = phone_number[:12]
                 self.order.phone_number = phone_number
                 self.order.customer_name = str(self.ws[(self.CN_Col + str(row))].value)
                 self.get_time(row)
@@ -150,8 +153,9 @@ Customer Number: {}
                     self.order.end_time,
                     self.order.address,
                 )
-                self.write_to_text(f)
-                orders_sent = orders_sent + 1
+                if len(self.order.order_number) >= 5:
+                    self.write_to_text(f)
+                    orders_sent = orders_sent + 1
             else:
                 if value == "None":
                     blank_rows = blank_rows + 1
