@@ -185,7 +185,12 @@ Customer Number: {}
 
         self.edit_entry("Done!")
         f.close()
-        subprocess.Popen(["notepad.exe", txt_path])     #Open the written text file so the user can send messages
+        subprocess.Popen(["notepad.exe", txt_path])
+        self.WO_Col = 'B'
+        self.CN_Col = 'D'
+        self.ADD_Col = 'F'
+        self.ST_Col = 'H'
+        self.PN_Col = 'I'     #Open the written text file so the user can send messages
 
     def get_time(self, row): #Gets time from spreadsheet and calculates range. Formats time with AM/PM.
         value = str(self.ws[(self.ST_Col + str(row))].value)
