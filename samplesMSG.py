@@ -26,7 +26,6 @@ class MainWindow(Frame):
 
         #Initial Window Set Up
         self.master = master
-        master.iconbitmap("TD.ico")
         master.title("Delivery Message Generator")
         self.master.resizable(0,0)      #Setting window to not be resizable
 
