@@ -6,7 +6,7 @@ from time import sleep
 import os
 import re
 import subprocess
-
+import sys
 
 
 class WorkOrder:
@@ -83,7 +83,7 @@ def main():
             case "E":
                 print("Goodbye!")
                 sleep(1)
-                exit()
+                sys.exit("User Quit")
 
     os.system("cls")
     print("Processing Work Orders")
@@ -169,7 +169,6 @@ WO Number: %s
     print("Processing Finished!")
     print(f"{wo_processed} Work Orders Processed")
     input("Press Enter to exit")
-    exit()
 
 
 def get_columns(ws, header_row):
