@@ -1,5 +1,5 @@
-from openpyxl import load_workbook
 from tkinter import filedialog as fd
+from openpyxl import load_workbook
 from parsedatetime import Calendar
 from datetime import datetime
 from time import sleep
@@ -34,9 +34,9 @@ text_colors = {
     "endc": '\033[0m'
 }
 
-header_row = 1
+HEADER_ROW = 1
 
-message = """Artificial Grass Delivery Confirmation- Your order, {}, has been dispatched and will be delivered {} between {} - {} at {}.
+MESSAGE = """Artificial Grass Delivery Confirmation- Your order, {}, has been dispatched and will be delivered {} between {} - {} at {}.
 To prepare for your delivery please make sure nothing is blocking the delivery location selected. 
 You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm."""
 
@@ -66,13 +66,13 @@ def main():
     i = 1
     while i < 10:
         value = ws["A" + str(i)].value
-        if value == "Service Resource: Name  ↑":
-            header_row = i
+        if "Service Resource: Name" in value:
+            HEADER_ROW = i
             break
         else:
             i = i+1
             continue
-    get_columns(ws, header_row)
+    get_columns(ws, HEADER_ROW)
 
     while True:
         choice = input("Press S to start processing\nOr press E to exit")
@@ -137,7 +137,7 @@ def main():
                 else:
                     order.delivery_day = "tomorrow"
 
-                order.message = message.format(
+                order.message = MESSAGE.format(
                     order.order_number,
                     order.delivery_day,
                     order.start_time,
@@ -169,6 +169,7 @@ WO Number: %s
     print("Processing Finished!")
     print(f"{wo_processed} Work Orders Processed")
     input("Press Enter to exit")
+    print(f"{text_colors['endc']}")
 
 
 def get_columns(ws, header_row):
