@@ -44,7 +44,7 @@ You will receive another text notification 30 minutes prior to arrival. If there
 def main():
     print(f"{text_colors['green']}Turf Distributors ETA Text Message Generator")
     print("Written by Jordan Del Pilar")
-    print(f"jordan.delpilar@turfdistribors.com{text_colors['endc']}")
+    print(f"jordan.delpilar@turfdistributors.com{text_colors['endc']}")
     print("=" * 80)
     print("\n")
 
@@ -62,6 +62,7 @@ def main():
             break
         except:
             print(f"{text_colors['red']}Could not open excel sheet\nMake sure the sheet is not open and try again.\n{text_colors['endc']}")
+            input("Press Enter to try again")
 
     i = 1
     while i < 10:
