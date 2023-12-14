@@ -5,6 +5,12 @@ A lightweight script for automatically generating ETA text messages
 This project was created to automate the creation of ETA text messages. It reads information directly from the route, 
 pulls the information needed to generate the message, and then outputs the messages for all orders to a text file.
 
+## Current Version
+### Version 3 
+### The Pandas Update
+New version uses pandas to convert excel data directly to a python dict. This allows for simpler parsing of the data and
+faster processing due to only needing one call to read the Excel sheet. 
+
 ## How to use
 
 - Download the .exe file from the [releases page](https://github.com/redjordan1202/Text_Generator/releases "Text Generator Releases").
@@ -19,14 +25,21 @@ Make sure to get the newest version listed.
 There are no requirements to run the exe version of this script. 
 However, if you want to run the source directly you will need the following reqirements
 - Python 3.10 or newer (Needed to use Switch/Case)
-- openpyxl (For reading xlsx files)
+- pandas (For reading excel sheets and parsing to python dict)
 - parsedatetime (For parsing date/time from Excel sheet)
 
 All required packages and versions used are listed in requirements.txt
 
 ### Spreadsheet requirements
-The spreadsheet used must be in xlsx format. Column A must-have Service Resource: Name somewhere in the first 10 rows.
-This is needed to tell the script where the header row is so the script can see where the other column headers are.
+Spreadsheet must have columns in the following order.
+1. Service Resource: Name
+2. Work Order Number
+3. Appointment Number
+4. Account: Account Name
+5. Description
+6. Address
+7. \* Can be any data in this column \*
+8. Scheduled Start
+9. Contact: Phone Number
 
-Please let me know if any major changes are made to the spreadsheet so that testing can be done and any needed changes 
-made to the script.
+Column 7 can have any data, but can not be missing. 
