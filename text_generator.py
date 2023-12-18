@@ -55,7 +55,7 @@ def main():
             excel_data = pandas.read_excel(
                 sheet, "Route Sheet Report Inc Weight")
             excel_dict = excel_data.to_dict(orient='records')
-    except:
+    except Exception:
         print(
             f"{text_colors['red']} *** Could not open Excel file. {text_colors['endc']}")
         print("Please make sure the Excel file is not open")
@@ -106,10 +106,10 @@ def main():
             if isinstance(raw_time, datetime):
                 try:
                     raw_time = raw_time.strftime("%m/%d/%Y %H:%M:%S %p")
-                except:
+                except Exception:
                     try:
                         raw_time = raw_time.strftime("%m/%d/%Y %H:%M %p")
-                    except:
+                    except Exception:
                         print(
                             f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to convert date to string. Skipping Row")
                         has_error = True
