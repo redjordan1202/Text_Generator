@@ -1,14 +1,16 @@
-import pandas
-from tkinter import filedialog as fd
-from parsedatetime import Calendar
-from datetime import datetime
-import warnings
-import math
 import os
 import re
 import subprocess
 import sys
+import warnings
+import math
 from time import sleep
+from tkinter import filedialog as fd
+from datetime import datetime
+
+import pandas
+from parsedatetime import Calendar
+
 
 # Text color escape codes for Windows terminal
 text_colors = {
@@ -26,9 +28,10 @@ You will receive another text notification 30 minutes prior to arrival. If there
 def main():
     has_error = False
 
-    print(f"{text_colors['green']}Turf Distributors ETA Text Message Generator")
+    print(
+        f"{text_colors['green']}Turf Distributors ETA Text Message Generator")
     print("Written by Jordan Del Pilar")
-    print(f"jordan.delpilar@turfdistributors.com")
+    print("jordan.delpilar@turfdistributors.com")
     print("Version 3.0 The Pandas Update")
     print(f"{text_colors['endc']}")
     print("=" * 80)
@@ -49,31 +52,31 @@ def main():
 
     try:
         with warnings.catch_warnings(record=True):
-            excel_data = pandas.read_excel(sheet, "Route Sheet Report Inc Weight")
+            excel_data = pandas.read_excel(
+                sheet, "Route Sheet Report Inc Weight")
             excel_dict = excel_data.to_dict(orient='records')
-    except pandas.XLRDError:
-        print(f"{text_colors['red']} *** Could not open Excel file. {text_colors['endc']}")
+    except:
+        print(
+            f"{text_colors['red']} *** Could not open Excel file. {text_colors['endc']}")
         print("Please make sure the Excel file is not open")
         input("Press Enter to Close")
         sys.exit()
-    except Exception:
-        print(f"{text_colors['red']} *** Unknown Error Occured {text_colors['endc']}")
-        input("Press Enter to Close")
 
-    txt_path = os.path.split(sheet)[0] + '/' + datetime.now().strftime("%m-%d-%Y") + ".txt"
-    txt = open(txt_path, "a")
+    txt_path = os.path.split(sheet)[0] + '/' + \
+        datetime.now().strftime("%m-%d-%Y") + ".txt"
+    txt = open(txt_path, "a", encoding="utf-8")
     records_processed = 0
     for record in excel_dict:
         is_work_order = False
         work_order = record['Unnamed: 1']
 
-        if type(work_order) == float:
+        if isinstance(work_order, float):
             if math.isnan(work_order):
                 continue
             else:
                 print(f"{work_order}\t{math.isnan(work_order)}")
                 is_work_order = True
-        elif type(work_order) == str and work_order != "nan":
+        elif isinstance(work_order, str) and work_order != "nan":
             if work_order.isnumeric():
                 is_work_order = True
 
@@ -88,7 +91,7 @@ def main():
             else:
                 customer_state = "CA"
 
-            phone_number = re.sub('\D', '', record["Unnamed: 8"])
+            phone_number = re.sub(r'\D', '', record["Unnamed: 8"])
             if len(phone_number) > 0:
                 if phone_number[0] == 1:
                     phone_number = "+" + phone_number
@@ -100,21 +103,23 @@ def main():
                 phone_number = "None Provided"
 
             raw_time = record["Unnamed: 7"]
-            if type(raw_time) == datetime:
+            if isinstance(raw_time, datetime):
                 try:
                     raw_time = raw_time.strftime("%m/%d/%Y %H:%M:%S %p")
                 except:
                     try:
                         raw_time = raw_time.strftime("%m/%d/%Y %H:%M %p")
                     except:
-                        print(f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to convert date to string. Skipping Row")
+                        print(
+                            f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to convert date to string. Skipping Row")
                         has_error = True
                         continue
             try:
                 cal = Calendar()
                 time = cal.parse(raw_time)
             except TypeError:
-                print(f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to parse date. Skipping Row")
+                print(
+                    f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to parse date. Skipping Row")
                 has_error = True
                 continue
 
@@ -157,7 +162,7 @@ def main():
 
             print("Writting to File...")
             txt.write(
-f"""Work Order Number: {record['Unnamed: 1']}
+                f"""Work Order Number: {record['Unnamed: 1']}
 Service Appointment Number: {record['Unnamed: 2']}
 Customer Name: {record['Unnamed: 3']}
 Phone Number: {phone_number}
@@ -168,9 +173,7 @@ Customer State: {customer_state}
 
 
 ================================================================================\n
-"""
-
-            )
+"""         )
 
             records_processed += 1
 
@@ -181,7 +184,8 @@ Customer State: {customer_state}
     try:
         subprocess.Popen(['notepad.exe', txt_path])
     except FileNotFoundError:
-        print(f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to open notepad. Please open the file directly")
+        print(
+            f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to open notepad. Please open the file directly")
 
     print(f"{text_colors['green']}")
     print("=" * 80)
