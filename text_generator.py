@@ -57,7 +57,7 @@ def main():
             excel_dict = excel_data.to_dict(orient='records')
     except Exception:
         print(
-            f"{text_colors['red']} *** Could not open Excel file. {text_colors['endc']}")
+            f"{text_colors['red']}ERROR{text_colors['endc']} -  Could not open Excel file.")
         print("Please make sure the Excel file is not open")
         input("Press Enter to Close")
         sys.exit()
