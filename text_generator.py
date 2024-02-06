@@ -27,6 +27,15 @@ You will receive another text notification 30 minutes prior to arrival. If there
 
 def main():
     has_error = False
+    header_row = None
+    columns = dict(
+        wo_number=0,
+        address=0,
+        phone_number=0,
+        start_time=0,
+        customer_name=0,
+        so_number=0
+    )
 
     print(
         f"{text_colors['green']}Turf Distributors ETA Text Message Generator")
@@ -62,13 +71,67 @@ def main():
         input("Press Enter to Close")
         sys.exit()
 
+
+    print("Looking for header row")
+    i = 0
+    for row in excel_dict:
+        for cell in row.items():
+            if cell[1] == "Work Order Number":
+                header_row = i
+            else:
+                continue
+        i += 1
+
+    if not header_row:
+        print(f"{text_colors['red']}ERROR{text_colors['endc']} - Unable to find header row.")
+        input("Press Enter to Close")
+    else:
+        print("Header Row Found\nParsing Columns")
+
+    for cell in excel_dict[header_row].items():
+        match cell[1]:
+            
+            case "Work Order Number":
+                columns["wo_number"] = cell[0]
+                continue
+            
+            case "Address":
+                columns["address"] = cell[0]
+                continue
+
+            case "Contact Phone Number":
+                columns["phone_number"] = cell[0]
+                continue
+
+            case "Scheduled Start":
+                columns["start_time"] = cell[0]
+                continue
+
+            case "Account: Account Name":
+                columns["customer_name"] = cell[0]
+                continue
+
+            case "Appointment Number":
+                columns["so_number"] = cell[0]
+                continue
+            
+            case _:
+                continue
+
+    for col in columns.values():
+        if col == 0:
+            print(f"{text_colors['red']}ERROR{text_colors['endc']} - Unable to find all needed columns.")
+            input("Press Enter to Close")
+        else:
+            print("Header Parsing complete")
+
     txt_path = os.path.split(sheet)[0] + '/' + \
         datetime.now().strftime("%m-%d-%Y") + ".txt"
     txt = open(txt_path, "a", encoding="utf-8")
     records_processed = 0
     for record in excel_dict:
         is_work_order = False
-        work_order = record['Unnamed: 1']
+        work_order = record[columns["wo_number"]]
 
         if isinstance(work_order, float):
             if math.isnan(work_order):
@@ -84,14 +147,14 @@ def main():
             print(f"*** Processing Work Order {work_order} ***")
 
             customer_state = None
-            if record["Unnamed: 5"].find("FL") > 0:
+            if record[columns["address"]].find("FL") > 0:
                 customer_state = "FL"
-            elif record["Unnamed: 5"].find("NV") > 0:
+            elif record[columns["address"]].find("NV") > 0:
                 customer_state = "NV"
             else:
                 customer_state = "CA"
 
-            phone_number = re.sub(r'\D', '', record["Unnamed: 8"])
+            phone_number = re.sub(r'\D', '', record[columns["phone_number"]])
             if len(phone_number) > 0:
                 if phone_number[0] == 1:
                     phone_number = "+" + phone_number
@@ -102,7 +165,7 @@ def main():
             else:
                 phone_number = "None Provided"
 
-            raw_time = record["Unnamed: 7"]
+            raw_time = record[columns["start_time"]]
             if isinstance(raw_time, datetime):
                 try:
                     raw_time = raw_time.strftime("%m/%d/%Y %H:%M:%S %p")
@@ -153,18 +216,18 @@ def main():
                 delivery_day = "tomorrow"
 
             customer_msg = MESSAGE.format(
-                record['Unnamed: 1'],
+                work_order,
                 delivery_day,
                 start_time,
                 end_time,
-                record["Unnamed: 5"]
+                record[columns["address"]]
             )
 
             print("Writting to File...")
             txt.write(
-                f"""Work Order Number: {record['Unnamed: 1']}
-Service Appointment Number: {record['Unnamed: 2']}
-Customer Name: {record['Unnamed: 3']}
+                f"""Work Order Number: {work_order}
+Service Appointment Number: {record[columns["so_number"]]}
+Customer Name: {record[columns["customer_name"]]}
 Phone Number: {phone_number}
 Customer State: {customer_state}
 
