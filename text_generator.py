@@ -25,6 +25,8 @@ To prepare for your delivery please make sure nothing is blocking the delivery l
 You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm."""
 
 
+
+
 def main():
     has_error = False
     header_row = None
@@ -37,6 +39,10 @@ def main():
         so_number=0
     )
 
+    platform = None
+    term_clear = None
+    txt_editor = None
+
     print(
         f"{text_colors['green']}Turf Distributors ETA Text Message Generator")
     print("Written by Jordan Del Pilar")
@@ -45,6 +51,23 @@ def main():
     print(f"{text_colors['endc']}")
     print("=" * 80)
     print("\n")
+
+    match sys.platform:
+
+        case "win32":
+            platform = "windows"
+            term_clear = "cls"
+            txt_editor = "notepad.exe"
+        
+        case "darwin":
+            platform = "macos"
+            term_clear = "clear"
+            txt_editor = "open -a TextEdit"
+
+        case _:
+            print(f"{text_colors['red']}\n!!! Warning !!!{text_colors['endc']}")
+            print("This script must be run on either MacOS or Windows")
+            input("Press Enter to exit")
 
     # Loop through file selection until user selects a file
     while True:
@@ -58,6 +81,8 @@ def main():
 
         if sheet:
             break
+    
+    os.system(term_clear)
 
     try:
         with warnings.catch_warnings(record=True):
@@ -71,6 +96,7 @@ def main():
         input("Press Enter to Close")
         sys.exit()
 
+    os.system(term_clear)
 
     print("Looking for header row")
     i = 0
@@ -129,6 +155,10 @@ def main():
     txt_path = os.path.split(sheet)[0] + '/' + \
         datetime.now().strftime("%m-%d-%Y") + ".txt"
     txt = open(txt_path, "a", encoding="utf-8")
+
+    os.system(term_clear)
+    print(f"{text_colors['green']}Starting Processing{text_colors['endc']}")
+
     records_processed = 0
     for record in excel_dict:
         is_work_order = False
@@ -245,8 +275,10 @@ Customer State: {customer_state}
 
     txt.close()
 
+    os.system(term_clear)
+
     try:
-        subprocess.Popen(['notepad.exe', txt_path])
+        subprocess.Popen(f"{txt_editor} {txt_path}", shell=True)
     except FileNotFoundError:
         print(
             f"{text_colors['red']}ERROR{text_colors['endc']} - Failed to open notepad. Please open the file directly")
@@ -261,8 +293,7 @@ Customer State: {customer_state}
         print(f"{text_colors['green']}")
         print("=" * 80)
     print(f"{records_processed} Work Orders Processed")
-    input(f"{text_colors['endc']}Press Enter to exit    ")
-
+    input(f"{text_colors['endc']}Press Enter to exit")
 
 if __name__ == '__main__':
     main()
