@@ -123,7 +123,8 @@ def main():
             print(f"{text_colors['red']}ERROR{text_colors['endc']} - Unable to find all needed columns.")
             input("Press Enter to Close")
         else:
-            print("Header Parsing complete")
+            continue
+    print("Header Parsing complete")
 
     txt_path = os.path.split(sheet)[0] + '/' + \
         datetime.now().strftime("%m-%d-%Y") + ".txt"
