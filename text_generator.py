@@ -11,7 +11,6 @@ from datetime import datetime
 import pandas
 from parsedatetime import Calendar
 
-
 # Text color escape codes for Windows terminal
 text_colors = {
     "green": '\033[92m',
@@ -23,8 +22,6 @@ text_colors = {
 MESSAGE = """Artificial Grass Delivery Confirmation- Your order, {}, has been dispatched and will be delivered {} between {} - {} at {}.
 To prepare for your delivery please make sure nothing is blocking the delivery location selected. 
 You will receive another text notification 30 minutes prior to arrival. If there is a gate or entry approval, please provide and confirm."""
-
-
 
 
 def main():
@@ -58,7 +55,7 @@ def main():
             platform = "windows"
             term_clear = "cls"
             txt_editor = "notepad.exe"
-        
+
         case "darwin":
             platform = "macos"
             term_clear = "clear"
@@ -81,7 +78,7 @@ def main():
 
         if sheet:
             break
-    
+
     os.system(term_clear)
 
     try:
@@ -100,6 +97,7 @@ def main():
 
     print("Looking for header row")
     i = 0
+    header_row = 0
     for row in excel_dict:
         for cell in row.items():
             if cell[1] == "Work Order Number":
@@ -108,19 +106,19 @@ def main():
                 continue
         i += 1
 
-    if not header_row:
+    if header_row is not None:
+        print("Header Row Found\nParsing Columns")
+    else:
         print(f"{text_colors['red']}ERROR{text_colors['endc']} - Unable to find header row.")
         input("Press Enter to Close")
-    else:
-        print("Header Row Found\nParsing Columns")
 
     for cell in excel_dict[header_row].items():
         match cell[1]:
-            
+
             case "Work Order Number":
                 columns["wo_number"] = cell[0]
                 continue
-            
+
             case "Address":
                 columns["address"] = cell[0]
                 continue
@@ -140,7 +138,7 @@ def main():
             case "Appointment Number":
                 columns["so_number"] = cell[0]
                 continue
-            
+
             case _:
                 continue
 
@@ -153,7 +151,7 @@ def main():
     print("Header Parsing complete")
 
     txt_path = os.path.split(sheet)[0] + '/' + \
-        datetime.now().strftime("%m-%d-%Y") + ".txt"
+               datetime.now().strftime("%m-%d-%Y") + ".txt"
     txt = open(txt_path, "a", encoding="utf-8")
 
     os.system(term_clear)
@@ -187,7 +185,7 @@ def main():
 
             phone_number = re.sub(r'\D', '', record[columns["phone_number"]])
             if len(phone_number) > 0:
-                if phone_number[0] == 1:
+                if phone_number[0] == "1":
                     phone_number = "+" + phone_number
                 else:
                     phone_number = "+1" + phone_number
@@ -267,7 +265,7 @@ Customer State: {customer_state}
 
 
 ================================================================================\n
-"""         )
+""")
 
             records_processed += 1
 
@@ -294,6 +292,7 @@ Customer State: {customer_state}
         print("=" * 80)
     print(f"{records_processed} Work Orders Processed")
     input(f"{text_colors['endc']}Press Enter to exit")
+
 
 if __name__ == '__main__':
     main()
